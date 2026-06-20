@@ -1,0 +1,106 @@
+# =============================================================
+# ESTIA — AI Multimodal Hotel Concierge Assistant
+# .gitignore
+# =============================================================
+
+# ----- Python -----
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+*.egg
+*.egg-info/
+dist/
+build/
+eggs/
+parts/
+var/
+sdist/
+wheels/
+pip-wheel-metadata/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+MANIFEST
+
+# ----- Virtual Environments -----
+venv/
+.venv/
+env/
+.env/
+ENV/
+env.bak/
+venv.bak/
+
+# ----- Environment Variables (NEVER commit secrets) -----
+.env
+.env.local
+.env.production
+.env.staging
+*.env
+
+# ----- IDE & Editors -----
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+
+# ----- Testing -----
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+.nox/
+coverage.xml
+*.cover
+*.py,cover
+nosetests.xml
+test-results/
+
+# ----- Jupyter Notebooks -----
+.ipynb_checkpoints
+*.ipynb
+
+# ----- ChromaDB Vector Store -----
+chroma_db/
+chroma/
+vector_store/
+*.chroma
+
+# ----- Logs -----
+logs/
+*.log
+*.log.*
+
+# ----- OS -----
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# ----- Temporary Files -----
+*.tmp
+*.bak
+*.swp
+tmp/
+temp/
+
+# ----- Distribution -----
+dist/
+build/
+*.tar.gz
+*.zip
+
+# ----- mypy -----
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# ----- Ruff / Black -----
+.ruff_cache/

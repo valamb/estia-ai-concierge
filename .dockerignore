@@ -1,0 +1,42 @@
+# Development
+venv/
+.venv/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Secrets — never in image
+.env
+.env.*
+
+# Version control
+.git/
+.gitignore
+
+# Tests and tooling
+tests/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+htmlcov/
+.coverage
+
+# Local vector store — rebuilt at runtime
+chroma_db/
+
+# Documentation
+docs/
+examples/
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+logs/
+*.log

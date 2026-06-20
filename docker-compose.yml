@@ -1,0 +1,52 @@
+# =============================================================
+# ESTIA — Docker Compose
+# Runs the application with a persistent ChromaDB volume.
+#
+# Usage:
+#   docker compose up --build          # start
+#   docker compose down                # stop
+#   docker compose down -v             # stop and delete volumes
+# =============================================================
+
+services:
+
+  estia:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: production
+    container_name: estia-concierge
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    environment:
+      # Required
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      # Application
+      - APP_ENV=production
+      - DEBUG=false
+      - LOG_LEVEL=INFO
+      # ChromaDB — use the mounted volume path
+      - CHROMA_DB_PATH=/app/chroma_db
+      # OpenAI models
+      - OPENAI_MODEL=${OPENAI_MODEL:-gpt-4o}
+      - OPENAI_EMBEDDING_MODEL=${OPENAI_EMBEDDING_MODEL:-text-embedding-3-small}
+      - OPENAI_MAX_TOKENS=${OPENAI_MAX_TOKENS:-1000}
+      - OPENAI_TEMPERATURE=${OPENAI_TEMPERATURE:-0.3}
+      # Language
+      - DEFAULT_LANGUAGE=${DEFAULT_LANGUAGE:-en}
+      # RAG
+      - RAG_TOP_K=${RAG_TOP_K:-5}
+    volumes:
+      - chroma_data:/app/chroma_db
+    healthcheck:
+      test: ["CMD", "python", "-c",
+             "import httpx; httpx.get('http://localhost:8000/health').raise_for_status()"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 20s
+
+volumes:
+  chroma_data:
+    name: estia-chroma-data
