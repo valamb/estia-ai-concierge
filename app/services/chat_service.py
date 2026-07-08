@@ -2,9 +2,10 @@ from openai import AsyncOpenAI
 from loguru import logger
 
 from app.core.config import settings
-from app.models.chat import ChatMessage
+from app.models.chat import ChatMessage, GuestContext
 from app.services import conversation_store
 from app.services.language_service import detect_language, get_system_prompt
+from app.services.context_extraction import format_context_block
 
 _client = AsyncOpenAI(api_key=settings.openai_api_key)
 
@@ -14,6 +15,7 @@ async def chat(
     user_message: str,
     language: str | None = None,
     context_documents: list[str] | None = None,
+    guest_context: GuestContext | None = None,
 ) -> tuple[str, str, int]:
     """
     Send a message to OpenAI and return the assistant reply.
@@ -29,6 +31,11 @@ async def chat(
         system_prompt += (
             f"\n\n## Relevant Hotel Information\n\n{context_block}"
         )
+
+    if guest_context:
+        guest_block = format_context_block(guest_context)
+        if guest_block:
+            system_prompt += f"\n\n{guest_block}"
 
     history = conversation_store.get_history(conversation_id)
 

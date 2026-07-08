@@ -46,10 +46,9 @@ app.add_middleware(
 
 app.include_router(api_router)
 
-# Serve frontend — must come after API routes
+# Serve frontend — must come after API routes.
+# html=True makes StaticFiles serve index.html for "/" and handle 404s gracefully.
+# Mounted at "/" so that relative paths in index.html (js/chat.js, css/style.css)
+# resolve correctly without a /static prefix.
 if _STATIC_DIR.exists():
-    app.mount("/static", StaticFiles(directory=str(_STATIC_DIR)), name="static")
-
-    @app.get("/", include_in_schema=False)
-    async def serve_frontend() -> FileResponse:
-        return FileResponse(str(_STATIC_DIR / "index.html"))
+    app.mount("/", StaticFiles(directory=str(_STATIC_DIR), html=True), name="static")

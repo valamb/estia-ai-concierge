@@ -87,3 +87,52 @@ pytest tests/ -v
 3. Run `black .` and `ruff check .`
 4. Commit using the convention above
 5. Open a Pull Request to `develop`
+
+---
+
+## Conversation-Level Guest Context Memory
+
+ESTIA extracts and remembers guest context within a single conversation session.
+Context is stored in memory only — it disappears when the application restarts.
+No database, Redis, cookies or persistent profiles are used.
+
+### How it works
+
+On every incoming message at `POST /api/v1/chat`:
+
+1. The existing `GuestContext` for the `conversation_id` is loaded from `conversation_store`.
+2. `extract_context(message)` runs rule-based extraction on the raw message text (no LLM call).
+3. The old and new contexts are merged with `merge_context()` — scalar fields take the newer value; list fields (interests, dietary preferences, children ages) are unioned.
+4. The merged context is saved back to `conversation_store`.
+5. `chat_service.chat()` receives the context and appends a `## Known Guest Context` block to the system prompt, after the RAG context block and before conversation history.
+6. Empty contexts (all fields None / empty lists) are silently skipped — nothing is appended.
+
+### GuestContext fields
+
+| Field | Type | Example |
+|---|---|---|
+| `property` | `str \| None` | `"porto_elounda"` |
+| `guest_type` | `str \| None` | `"family"`, `"honeymoon"`, `"couple"`, `"vip"` |
+| `children_ages` | `list[int]` | `[5, 8]` |
+| `interests` | `list[str]` | `["spa", "beach"]` |
+| `occasion` | `str \| None` | `"anniversary"`, `"birthday"`, `"proposal"` |
+| `preferred_language` | `str \| None` | `"en"`, `"el"` |
+| `dietary_preferences` | `list[str]` | `["vegetarian", "halal"]` |
+| `mobility_needs` | `str \| None` | `"wheelchair"` |
+
+### Relevant files
+
+| File | Purpose |
+|---|---|
+| `app/models/chat.py` | `GuestContext` Pydantic model |
+| `app/services/context_extraction.py` | `extract_context`, `merge_context`, `format_context_block` |
+| `app/services/conversation_store.py` | `get_context`, `save_context`, `clear_context` |
+| `app/services/chat_service.py` | Injects context block into system prompt |
+| `app/api/routes/chat.py` | Orchestrates extract → merge → save → pass per request |
+
+### Running Phase D tests
+
+```bash
+# All Phase D offline tests (59 tests, no API key needed)
+pytest tests/test_context_extraction.py tests/test_conversation_store_context.py tests/test_chat_integration_context.py -v
+```

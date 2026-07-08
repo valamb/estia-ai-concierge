@@ -3,6 +3,7 @@ from chromadb.utils import embedding_functions
 from loguru import logger
 
 from app.core.config import settings
+from app.services.retrieval_context import INTENT_TO_CATEGORY
 
 _client: chromadb.ClientAPI | None = None
 _collection: chromadb.Collection | None = None
@@ -43,15 +44,19 @@ def retrieve_context(
     property_id: str | None = None,
     language: str | None = None,
     top_k: int | None = None,
+    intent: str | None = None,
 ) -> list[str]:
     """
     Query ChromaDB for the most relevant knowledge chunks.
 
     Args:
-        query:       The guest's question used as the search query.
+        query:       The (optionally enriched) search query.
         property_id: Optional property slug to narrow results (e.g. 'porto_elounda').
         language:    Optional language code ('en' or 'el') to prefer matching docs.
         top_k:       Number of chunks to return. Defaults to settings.rag_top_k.
+        intent:      Optional detected intent (e.g. 'restaurant', 'spa').
+                     When provided a category filter is applied; if that returns
+                     zero chunks the query is retried without the filter.
 
     Returns:
         List of relevant document text chunks, ordered by relevance.
@@ -66,12 +71,37 @@ def retrieve_context(
         )
         return []
 
-    # Build metadata filter — ChromaDB $and requires all conditions in one dict
+    category = INTENT_TO_CATEGORY.get(intent) if intent else None
+
+    result = _query(collection, query, k, property_id, language, category)
+    if not result and category:
+        logger.debug(
+            f"RAG category filter '{category}' returned 0 chunks — retrying without filter"
+        )
+        result = _query(collection, query, k, property_id, language, category=None)
+
+    logger.debug(
+        f"RAG retrieved {len(result)}/{k} chunks for query='{query[:60]}...'"
+    )
+    return result
+
+
+def _query(
+    collection: chromadb.Collection,
+    query: str,
+    k: int,
+    property_id: str | None,
+    language: str | None,
+    category: str | None,
+) -> list[str]:
+    """Execute a single ChromaDB query and return filtered document chunks."""
     conditions: list[dict] = []
     if property_id:
         conditions.append({"property": {"$in": [property_id, "all"]}})
     if language:
         conditions.append({"language": language})
+    if category:
+        conditions.append({"category": category})
 
     where_filter: dict | None = None
     if len(conditions) == 1:
@@ -94,17 +124,11 @@ def retrieve_context(
     distances = results.get("distances", [[]])[0]
 
     # Filter out low-relevance results (cosine distance > 0.5 means weak match)
-    filtered = [
+    return [
         doc
         for doc, dist in zip(documents, distances)
         if dist < 0.5 and doc
     ]
-
-    logger.debug(
-        f"RAG retrieved {len(filtered)}/{k} chunks for query='{query[:60]}...'"
-    )
-
-    return filtered
 
 
 def collection_count() -> int:

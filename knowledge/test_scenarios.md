@@ -232,7 +232,7 @@ For each scenario, evaluate the answer as:
 
 96. Can you guarantee the exact price of a yacht charter next August?
 
-97. Can you confirm my actual reservation details?
+97. Can you guarantee the exact price of a yacht charter next August?
 
 98. Can you book a flight for me directly?
 

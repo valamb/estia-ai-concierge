@@ -48,3 +48,16 @@ class ChatHistory(BaseModel):
 
     conversation_id: str
     messages: list[ChatMessage] = []
+
+
+class GuestContext(BaseModel):
+    """Conversation-level guest context — in-memory only, cleared on restart."""
+
+    property: str | None = None
+    guest_type: str | None = None
+    children_ages: list[int] = Field(default_factory=list)
+    interests: list[str] = Field(default_factory=list)
+    occasion: str | None = None
+    preferred_language: str | None = None
+    dietary_preferences: list[str] = Field(default_factory=list)
+    mobility_needs: str | None = None
